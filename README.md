@@ -2,9 +2,9 @@
 
 **GTK3 desktop frontend for Canon G600-series network printers, built around the standard Linux CUPS tools and Canon's official Remote UI.**
 
-**Version:** 0.2.0 (localization update; historical package has a direct-launch issue) · **Package:** `canon-g600-manager_0.2.0_all.deb` · **License:** GPL-3.0-or-later · **Operating system:** Linux (Debian-family package)
+**Version:** 0.2.1 (Italian/English localization and desktop-launch fix) · **Package:** `canon-g600-manager_0.2.1_all.deb` · **License:** GPL-3.0-or-later · **Operating system:** Linux (Debian-family package)
 
-[Download the Debian package](https://github.com/giuxlab-hub/canon-g600-manager/releases/tag/v0.2.0) · [Giux-Lab](https://giux-lab.it/) · [Original source README](README.original.md)
+[Download the Debian package](https://github.com/giuxlab-hub/canon-g600-manager/releases/tag/v0.2.1) · [Giux-Lab](https://giux-lab.it/) · [Original source README](README.original.md)
 
 This is an **independent community utility developed by Giux-Lab**. It is not official Canon software, is not affiliated with or endorsed by Canon Inc., and does not implement undocumented maintenance protocols.
 
@@ -22,10 +22,10 @@ This is an **independent community utility developed by Giux-Lab**. It is not of
 
 ## Install on Debian
 
-Download `canon-g600-manager_0.2.0_all.deb` from [GitHub Releases](https://github.com/giuxlab-hub/canon-g600-manager/releases/tag/v0.2.0), then run:
+Download `canon-g600-manager_0.2.1_all.deb` from [GitHub Releases](https://github.com/giuxlab-hub/canon-g600-manager/releases/tag/v0.2.1), then run:
 
 ```bash
-sudo apt install ./canon-g600-manager_0.2.0_all.deb
+sudo apt install ./canon-g600-manager_0.2.1_all.deb
 ```
 
 The Debian package declares these dependencies: `python3`, `python3-gi`, `gir1.2-gtk-3.0`, `cups-client`, `xdg-utils`. It recommends `xsane` for the optional scanner launcher. A configured CUPS printer queue is required for printing.
@@ -50,9 +50,9 @@ cd canon-g600-manager
 ./build-deb.sh
 ```
 
-The build script requires `dpkg-deb` and produces `./canon-g600-manager_0.2.0_all.deb`. It stages the Python executable, a `.desktop` launcher, SVG icon and README. It does **not** install the package or print a page.
+The build script requires `dpkg-deb` and produces `./canon-g600-manager_0.2.1_all.deb`. It stages the Python executable, a `.desktop` launcher, SVG icon and README. It does **not** install the package or print a page.
 
-The original source distribution and the `.deb` distributed by Giux-Lab are also available as **unaltered assets** in the v0.1.0 GitHub release. The only change to the repository copy of `build-deb.sh` is the output location, which was made relative to the checkout instead of an absolute path under the author's home directory. The original build script is preserved inside the attached source tarball. See [source provenance](SOURCE_PROVENANCE.md).
+Version 0.2.1 is a corrective distribution of the author's bilingual v0.2.0 source. The corrected source tarball and the new Debian package are available on the v0.2.1 release; both preserve the program's interface and workflows. The original v0.2.0 Debian package and source archive remain separately available as historical assets. See [source provenance](SOURCE_PROVENANCE.md).
 
 ## License and attribution
 
@@ -66,7 +66,7 @@ Canon and related printer/model names are used solely to identify compatibility.
 
 **Canon G600 Manager** è un'utilità indipendente Giux-Lab per Linux, sviluppata in **Python 3 e GTK3**, che utilizza i comandi CUPS e l'interfaccia web ufficiale delle stampanti Canon serie G600.
 
-La versione pubblicata è **0.2.0**, disponibile come pacchetto Debian installabile e come codice sorgente completo.
+La versione pubblicata è **0.2.1**, disponibile come pacchetto Debian installabile e come codice sorgente completo.
 
 ### Funzionalità
 
@@ -79,15 +79,15 @@ La versione pubblicata è **0.2.0**, disponibile come pacchetto Debian installab
 
 ### Installazione e utilizzo
 
-Scaricare il file `canon-g600-manager_0.2.0_all.deb` dalla [release v0.1.0](https://github.com/giuxlab-hub/canon-g600-manager/releases/tag/v0.2.0), quindi installarlo:
+Scaricare il file `canon-g600-manager_0.2.1_all.deb` dalla [release v0.2.1](https://github.com/giuxlab-hub/canon-g600-manager/releases/tag/v0.2.1), quindi installarlo:
 
 ```bash
-sudo apt install ./canon-g600-manager_0.2.0_all.deb
+sudo apt install ./canon-g600-manager_0.2.1_all.deb
 ```
 
 Avviare l'applicazione dal menu oppure con `canon-g600-manager`. **Adattare la coda CUPS e l'indirizzo della stampante** ai valori della propria rete. La qualità di stampa effettiva dipende dal driver CUPS installato.
 
-Per ricompilare il pacchetto Debian dal repository, eseguire `./build-deb.sh`: l'archivio viene generato nella directory corrente. La sorgente Python e gli asset originali del pacchetto sono inclusi, mentre il tarball sorgente originale è conservato nella release.
+Per ricompilare il pacchetto Debian dal repository, eseguire `./build-deb.sh`: l'archivio viene generato nella directory corrente. La sorgente Python, lo script di compilazione, gli asset e i test sono inclusi nel repository e nel tarball della release v0.2.1; gli archivi originali della v0.2.0 restano conservati separatamente.
 
 **Licenza:** GNU GPL-3.0-or-later. Il progetto non è un software ufficiale Canon e non è affiliato a Canon Inc.
 
@@ -96,3 +96,9 @@ Per ricompilare il pacchetto Debian dal repository, eseguire `./build-deb.sh`: l
 ## Italian and English GUI localization (v0.2.0)
 
 Version 0.2.0 adds automatic language selection based on the desktop locale and a language selector in the application header. The original Debian package has a missing interpreter shebang, so direct launch from a desktop menu may fail. The corrected release is v0.2.1.
+
+### Language selection / Scelta lingua
+
+The application chooses Italian for a desktop locale starting with `it` and English otherwise. The header selector can switch between **Italiano** and **English** during use, retaining the current printer queue, host and print-quality selection. Maintenance and printing confirmation messages are localized in v0.2.1.
+
+L’interfaccia seleziona italiano per i sistemi con locale `it*`, inglese negli altri casi. Il selettore nell’intestazione cambia lingua mantenendo coda, indirizzo stampante e qualità di stampa scelta. La v0.2.1 traduce anche le informazioni di manutenzione e i messaggi di conferma della stampa.

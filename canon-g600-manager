@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Canon G600 Manager: safe Linux frontend to CUPS and Canon Remote UI."""
 import os
 import re
@@ -84,7 +86,9 @@ class Window(Gtk.Window):
         self.add_button(settings, tr('Elenca tutte le opzioni CUPS'), self.options)
         notebook.append_page(settings, Gtk.Label(label=tr('Stampa')))
         maintenance = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10, margin=15)
-        txt = Gtk.Label(label='La manutenzione avviene nella Remote UI ufficiale Canon.\nPotrebbe essere richiesta la password amministratore della stampante.\nQuesto programma non invia comandi di pulizia non documentati.')
+        txt = Gtk.Label(label=(tr('La manutenzione avviene nella Remote UI ufficiale Canon.\n')
+                               + tr('Potrebbe essere richiesta la password amministratore della stampante.\n')
+                               + tr('Questo programma non invia comandi di pulizia non documentati.')))
         txt.set_xalign(0)
         maintenance.pack_start(txt, False, False, 0)
         self.add_button(maintenance, tr('Apri gestione e manutenzione Canon'), self.maintenance)
@@ -212,7 +216,7 @@ class Window(Gtk.Window):
             return
         quality = self.quality.get_active_text()
         dlg = Gtk.MessageDialog(transient_for=self, flags=0, message_type=Gtk.MessageType.QUESTION, buttons=Gtk.ButtonsType.OK_CANCEL, text=tr('Stampare una pagina di prova?'))
-        dlg.format_secondary_text(tr('Coda: ') + q + '\nFormato: A4, carta normale\nQualità: ' + quality + "\nSarà consumato un foglio e dell'inchiostro.")
+        dlg.format_secondary_text(tr('Coda: ') + q + tr('\nFormato: A4, carta normale\nQualità: ') + quality + tr("\nSarà consumato un foglio e dell'inchiostro."))
         accepted = dlg.run() == Gtk.ResponseType.OK
         dlg.destroy()
         if not accepted:
@@ -230,7 +234,7 @@ class Window(Gtk.Window):
                 f.write('Fine lines and text test 1234567890\n' * 15)
             try:
                 code, out = command('lp', '-d', q, '-o', 'PageSize=A4', '-o', 'MediaType=Stationery', '-o', 'cupsPrintQuality=' + quality, path, timeout=20)
-                return ('Invio riuscito:\n' if code == 0 else 'Errore stampa:\n') + out
+                return (tr('Invio riuscito:\n') if code == 0 else tr('Errore stampa:\n')) + out
             finally:
                 os.unlink(path)
         self.run_async(work)

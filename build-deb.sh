@@ -1,14 +1,14 @@
 #!/bin/sh
 set -eu
 cd "$(dirname "$0")"
-VERSION=0.2.0
+VERSION=0.2.1
 STAGE="$(mktemp -d)"
 trap 'rm -rf "$STAGE"' EXIT
 mkdir -p "$STAGE/DEBIAN" "$STAGE/usr/bin" "$STAGE/usr/share/applications" "$STAGE/usr/share/icons/hicolor/scalable/apps" "$STAGE/usr/share/doc/canon-g600-manager"
 install -m 755 canon-g600-manager "$STAGE/usr/bin/canon-g600-manager"
 cat > "$STAGE/DEBIAN/control" <<'CONTROL'
 Package: canon-g600-manager
-Version: 0.2.0
+Version: 0.2.1
 Section: utils
 Priority: optional
 Architecture: all
@@ -39,4 +39,4 @@ cat > "$STAGE/usr/share/icons/hicolor/scalable/apps/canon-g600-manager.svg" <<'S
 SVG
 install -m 644 README.md "$STAGE/usr/share/doc/canon-g600-manager/README.md"
 find "$STAGE" -type d -exec chmod 755 {} +
-dpkg-deb --build --root-owner-group "$STAGE" "/home/giu/canon-g600-manager_0.2.0_all.deb"
+dpkg-deb --build --root-owner-group "$STAGE" "./canon-g600-manager_0.2.1_all.deb"
