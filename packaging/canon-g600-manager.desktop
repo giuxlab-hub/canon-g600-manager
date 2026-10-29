@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Canon G600 Manager
+Name[it]=Gestione Canon G600
+Comment=Manage Canon G600 printing and access official maintenance
+Comment[it]=Gestisci stampa Canon G600 e manutenzione ufficiale
+Exec=canon-g600-manager
+Icon=canon-g600-manager
+Terminal=false
+Categories=System;GTK;
+Keywords=Canon;CUPS;Printer;Maintenance;Stampante;
+StartupNotify=true

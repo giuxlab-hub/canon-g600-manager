@@ -1,0 +1,199 @@
+#!/usr/bin/python3
+# SPDX-License-Identifier: GPL-3.0-or-later
+"""Canon G600 Manager: safe Linux frontend to CUPS and Canon Remote UI."""
+import os
+import re
+import subprocess
+import threading
+import urllib.request
+from urllib.parse import urlparse
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk, GLib
+
+APP = "Canon G600 Manager"
+QUEUE = "Canon_G600_series"
+HOST = "192.168.1.107"
+CANON_MANUAL = "https://ij.manual.canon/ij/webmanual/Manual/All/G600%20series/EN/CNT/Top.html"
+
+def command(*args, timeout=8):
+    try:
+        p = subprocess.run(args, text=True, capture_output=True, timeout=timeout, check=False)
+        return (p.returncode, (p.stdout + p.stderr).strip())
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return (1, str(exc))
+
+def open_link(url):
+    subprocess.Popen(["xdg-open", url], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+class Window(Gtk.Window):
+    def __init__(self):
+        super().__init__(title=APP)
+        self.set_default_size(740, 600)
+        self.set_border_width(16)
+        self.set_position(Gtk.WindowPosition.CENTER)
+        self.connect("destroy", Gtk.main_quit)
+        root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        self.add(root)
+        head = Gtk.Label()
+        head.set_markup("<span size='x-large' weight='bold'>Canon G600 Manager</span>\n"
+                        "<span foreground='#666666'>CUPS + Canon Remote UI • Debian / XFCE</span>")
+        head.set_xalign(0)
+        root.pack_start(head, False, False, 0)
+        grid = Gtk.Grid(column_spacing=8, row_spacing=8)
+        root.pack_start(grid, False, False, 0)
+        grid.attach(Gtk.Label(label="Stampante CUPS:"), 0, 0, 1, 1)
+        self.queue_entry = Gtk.Entry(text=QUEUE)
+        grid.attach(self.queue_entry, 1, 0, 1, 1)
+        grid.attach(Gtk.Label(label="IP o hostname:"), 0, 1, 1, 1)
+        self.host_entry = Gtk.Entry(text=HOST)
+        grid.attach(self.host_entry, 1, 1, 1, 1)
+        self.button(grid, "Verifica stato", 2, 0, self.refresh)
+        self.button(grid, "Apri Remote UI", 2, 1, self.remote)
+        notebook = Gtk.Notebook()
+        root.pack_start(notebook, True, True, 0)
+        self.status_text = Gtk.TextView(editable=False, cursor_visible=False, wrap_mode=Gtk.WrapMode.WORD)
+        scroll = Gtk.ScrolledWindow()
+        scroll.add(self.status_text)
+        notebook.append_page(scroll, Gtk.Label(label="Stato"))
+        settings = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12, margin=15)
+        self.quality = Gtk.ComboBoxText()
+        for q in ("Draft", "Normal", "High"): self.quality.append_text(q)
+        self.quality.set_active(1)
+        row = Gtk.Box(spacing=10)
+        row.pack_start(Gtk.Label(label="Qualità stampa di prova:"), False, False, 0)
+        row.pack_start(self.quality, False, False, 0)
+        settings.pack_start(row, False, False, 0)
+        self.add_button(settings, "Stampa pagina diagnostica A4 (conferma)", self.print_test)
+        self.add_button(settings, "Apri impostazioni CUPS", lambda *_: open_link("http://localhost:631/printers/"))
+        self.add_button(settings, "Elenca tutte le opzioni CUPS", self.options)
+        notebook.append_page(settings, Gtk.Label(label="Stampa"))
+        maintenance = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10, margin=15)
+        txt = Gtk.Label(label="La manutenzione avviene nella Remote UI ufficiale Canon.\n"
+                        "Potrebbe essere richiesta la password amministratore della stampante.\n"
+                        "Questo programma non invia comandi di pulizia non documentati.")
+        txt.set_xalign(0)
+        maintenance.pack_start(txt, False, False, 0)
+        self.add_button(maintenance, "Apri gestione e manutenzione Canon", self.maintenance)
+        self.add_button(maintenance, "Apri manuale ufficiale Canon", lambda *_: open_link(CANON_MANUAL))
+        self.add_button(maintenance, "Apri scanner (XSane, se presente)", self.scan)
+        notebook.append_page(maintenance, Gtk.Label(label="Manutenzione"))
+        foot = Gtk.Label(label="GPL-3.0-or-later • Nessuna operazione di pulizia automatica • IP e coda modificabili")
+        foot.set_xalign(0)
+        root.pack_start(foot, False, False, 0)
+        self.refresh()
+
+    def button(self, grid, title, x, y, handler):
+        b = Gtk.Button(label=title)
+        b.connect("clicked", handler)
+        grid.attach(b, x, y, 1, 1)
+
+    def add_button(self, box, title, handler):
+        b = Gtk.Button(label=title)
+        b.connect("clicked", handler)
+        box.pack_start(b, False, False, 0)
+
+    def queue(self):
+        value = self.queue_entry.get_text().strip()
+        if not re.fullmatch(r"[A-Za-z0-9_.-]+", value):
+            raise ValueError("Nome coda non valido")
+        return value
+
+    def url(self, maintenance=False):
+        host = self.host_entry.get_text().strip()
+        if not re.fullmatch(r"[A-Za-z0-9.:-]+", host) or "/" in host:
+            raise ValueError("Indirizzo IP o hostname non valido")
+        return "http://" + host + ("/index.html?page=PAGE_AAP" if maintenance else "/")
+
+    def error(self, message):
+        dlg = Gtk.MessageDialog(transient_for=self, flags=0, message_type=Gtk.MessageType.ERROR,
+                                buttons=Gtk.ButtonsType.OK, text="Operazione non riuscita")
+        dlg.format_secondary_text(str(message))
+        dlg.run()
+        dlg.destroy()
+
+    def remote(self, *_):
+        try: open_link(self.url())
+        except Exception as exc: self.error(exc)
+
+    def maintenance(self, *_):
+        try: open_link(self.url(True))
+        except Exception as exc: self.error(exc)
+
+    def scan(self, *_):
+        try: subprocess.Popen(["xsane"])
+        except OSError:
+            self.error("XSane non installato. Installare il pacchetto xsane.")
+
+    def display(self, s):
+        self.status_text.get_buffer().set_text(s)
+
+    def run_async(self, work):
+        def target():
+            try: result = work()
+            except Exception as exc: result = str(exc)
+            GLib.idle_add(self.display, result)
+        threading.Thread(target=target, daemon=True).start()
+
+    def refresh(self, *_):
+        try: q = self.queue()
+        except ValueError as exc:
+            self.error(exc); return
+        self.display("Lettura stato CUPS in corso…")
+        def work():
+            parts = []
+            for args in (("lpstat", "-p", q), ("lpstat", "-v", q),
+                         ("lpstat", "-o", q), ("lpoptions", "-p", q)):
+                code, out = command(*args)
+                parts.append("$ " + " ".join(args) + "\n" + (out or "(nessuna coda attiva)") + "\n")
+            try:
+                url = self.url()
+                with urllib.request.urlopen(url, timeout=4) as resp:
+                    parts.append("Canon Remote UI: HTTP " + str(resp.status))
+            except Exception as exc:
+                parts.append("Canon Remote UI: non raggiungibile (" + str(exc) + ")")
+            return "\n".join(parts)
+        self.run_async(work)
+
+    def options(self, *_):
+        try: q = self.queue()
+        except ValueError as exc:
+            self.error(exc); return
+        self.run_async(lambda: command("lpoptions", "-p", q, "-l")[1])
+
+    def print_test(self, *_):
+        try: q = self.queue()
+        except ValueError as exc:
+            self.error(exc); return
+        quality = self.quality.get_active_text()
+        dlg = Gtk.MessageDialog(transient_for=self, flags=0, message_type=Gtk.MessageType.QUESTION,
+                                buttons=Gtk.ButtonsType.OK_CANCEL, text="Stampare una pagina di prova?")
+        dlg.format_secondary_text("Coda: " + q + "\nFormato: A4, carta normale\nQualità: " + quality +
+                                  "\nSarà consumato un foglio e dell'inchiostro.")
+        accepted = dlg.run() == Gtk.ResponseType.OK
+        dlg.destroy()
+        if not accepted: return
+        # CUPS accepts text/plain; test is simple and reproducible without extra packages.
+        self.display("Invio stampa in corso…")
+        def work():
+            import tempfile
+            with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", suffix=".txt", delete=False) as f:
+                path = f.name
+                f.write("CANON G600 MANAGER - PRINT QUALITY TEST\n\n")
+                f.write("Quality: " + quality + "\n")
+                f.write("ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz\n")
+                f.write("0123456789 ! ? + - / ( ) : ;\n")
+                f.write(("Fine lines and text test 1234567890\n") * 15)
+            try:
+                code, out = command("lp", "-d", q, "-o", "PageSize=A4",
+                                    "-o", "MediaType=Stationery", "-o", "cupsPrintQuality=" + quality,
+                                    path, timeout=20)
+                return ("Invio riuscito:\n" if code == 0 else "Errore stampa:\n") + out
+            finally:
+                os.unlink(path)
+        self.run_async(work)
+
+if __name__ == "__main__":
+    win = Window()
+    win.show_all()
+    Gtk.main()

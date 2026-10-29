@@ -1,0 +1,14 @@
+# Generated packages and temporary build products
+*.deb
+*.tar.gz
+build/
+dist/
+# Python runtime caches
+__pycache__/
+*.py[cod]
+# Local editors and backups
+.idea/
+.vscode/
+*~
+*.swp
+.DS_Store
