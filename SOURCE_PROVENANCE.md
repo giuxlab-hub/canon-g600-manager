@@ -33,3 +33,7 @@ The `__pycache__` directory from the expanded working folder is deliberately not
 - A local `dpkg-deb` build checks packaging; it is not a physical printer, scanner or GUI acceptance test.
 
 The original distribution packages are attached to the [v0.1.0 release](https://github.com/giuxlab-hub/canon-g600-manager/releases/tag/v0.1.0), without repacking or normalization.
+
+## Imported version 0.2.0
+
+The author supplied two additional original artifacts: `canon-g600-manager_0.2.0_all.deb` (SHA-256 `ccf55edc52688d4b7f6c57c52d5c02cfe3828a851bcf0428e344d7bbbab6a051`) and `canon-g600-manager-source_0.2.0.tar.gz` (SHA-256 `68facebdfd48decac5a464d9daa3e857ca0886a884e00cad9914005cd03ba205`). Version 0.2.0 introduces English localization and interactive language switching, but its installed script lacks `#!/usr/bin/python3`. Original packages are preserved; the next corrective release restores direct invocation.

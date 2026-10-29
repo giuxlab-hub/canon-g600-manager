@@ -9,3 +9,6 @@ Features: CUPS status, printing options, selectable quality test printing, acces
 Build on Debian: `bash build-deb.sh`
 
 License: GNU GPL v3 or later. Not affiliated with Canon Inc.
+
+## Languages
+The application supports Italian and English, automatically choosing the desktop language at launch. The language can also be switched directly from the application header without restarting.
